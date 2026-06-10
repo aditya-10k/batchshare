@@ -1,8 +1,23 @@
 spring:
   application:
     name: TextSharing
-
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
   data:
     mongodb:
-      uri: mongodb://localhost:27017/textshare
+      uri: ${SPRING_DATA_MONGO_URI}
 
+  mail:
+    host: ${BREVO_SMTP_HOST}
+    port: ${BREVO_SMTP_PORT}
+    username: ${BREVO_SMTP_USERNAME}
+    password: ${BREVO_SMTP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          startttls:
+            enable: true
+            required: true

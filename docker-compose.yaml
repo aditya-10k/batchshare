@@ -1,0 +1,40 @@
+name: batchshare
+
+services:
+  app:
+    build: .
+    depends_on:
+      - redis
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATA_MONGO_URI: mongodb://host.docker.internal:27017/batchshare
+
+      SPRING_MAIL_HOST: ${BREVO_SMTP_HOST}
+      SPRING_MAIL_PORT: ${BREVO_SMTP_PORT}
+      SPRING_MAIL_USERNAME: ${BREVO_SMTP_USERNAME}
+      SPRING_MAIL_PASSWORD: ${BREVO_SMTP_PASSWORD}
+      BREVO_EMAIL_FROM: ${BREVO_EMAIL_FROM}
+
+      SPRING_DATA_REDIS_HOST: ${SPRING_DATA_REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${SPRING_DATA_REDIS_PORT}
+    env_file:
+      - .env
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+#  mongo:
+#    image: mongo:8
+#    ports:
+#      - "27017:27017"
+#    volumes:
+#      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
+
+
