@@ -1,11 +1,14 @@
 import 'dart:ui';
 
+import 'package:batchshare/HomePage/Bloc/HomePageBloc.dart';
+import 'package:batchshare/HomePage/Bloc/HomePageEvent.dart';
+import 'package:batchshare/HomePage/Views/Pages/LandingPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
-import 'package:textshare/HomePage/Bloc/HomePageBloc.dart';
-import 'package:textshare/HomePage/Bloc/HomePageEvent.dart';
-import 'package:textshare/HomePage/Views/Pages/LandingPage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:batchshare/Elements/AppScaffold.dart';
+
 
 class InitialPage extends StatefulWidget {
   final bool isRename;
@@ -21,44 +24,52 @@ class _InitialPageState extends State<InitialPage> {
   final nameController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _loadName();
+  }
+
+  Future<void> _loadName() async {
+    final SharedPreferences pref = await SharedPreferences.getInstance();
+    final String? existingName = pref.getString("Name");
+    if (existingName != null && existingName.isNotEmpty) {
+      setState(() {
+        nameController.text = existingName;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    return Column(
-      children: [
-        SizedBox(height: 60),
-        Center(
-          child: Text(
-            'Text Share',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 35,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 10,
-            ),
-          ),
-        ),
-        SizedBox(height: 40),
-        Stack(
+    final isDesktop = size.width > 700;
+    return AppScaffold(
+      showHeader: false,
+      child: SingleChildScrollView(
+        child: Column(
           children: [
-            LandingPage(),
-
-            Positioned.fill(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Container(),
+            SizedBox(height: isDesktop ? 60 : 20),
+            Center(
+              child: Text(
+                'Batch Share',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 35,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 10,
+                ),
               ),
             ),
-
+            SizedBox(height: isDesktop ? 40 : 20),
             Center(
               child: Container(
-                height: size.height * 0.5,
-                width: size.width * 0.4,
+                width: size.width > 700 ? size.width * 0.4 : size.width * 0.85,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: Colors.white.withOpacity(0.08),
                   border: Border.all(
                     color: Colors.white.withOpacity(0.3),
-                    width: 1,
+                    width: 0.5,
                   ),
                 ),
                 child: Padding(
@@ -73,14 +84,14 @@ class _InitialPageState extends State<InitialPage> {
                             widget.isRename
                                 ? 'Rename?'
                                 : 'Just one Quick thing ...',
-                            style: TextStyle(
+                            style: const TextStyle(
                               letterSpacing: 2,
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 30,
                             ),
                           ),
-                          Spacer(),
+                          const Spacer(),
                           widget.isRename
                               ? InkWell(
                                   borderRadius: BorderRadius.circular(14),
@@ -89,14 +100,12 @@ class _InitialPageState extends State<InitialPage> {
                                       AppStartUp(),
                                     );
                                   },
-
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 16,
                                       vertical: 5,
                                     ),
                                     decoration: BoxDecoration(
-                                      // color: Colors.white.withValues(alpha: 0.3),
                                       borderRadius: BorderRadius.circular(14),
                                       border: Border.all(
                                         color: Colors.white.withOpacity(0.3),
@@ -114,13 +123,13 @@ class _InitialPageState extends State<InitialPage> {
                                     ),
                                   ),
                                 )
-                              : SizedBox(),
+                              : const SizedBox(),
                         ],
                       ),
 
                       const SizedBox(height: 10),
 
-                      Text(
+                      const Text(
                         'This name will be visible to others in the room',
                         style: TextStyle(
                           letterSpacing: 1.5,
@@ -140,7 +149,7 @@ class _InitialPageState extends State<InitialPage> {
                         ),
                         decoration: InputDecoration(
                           hintText: 'Barney Stinson',
-                          hintStyle: TextStyle(
+                          hintStyle: const TextStyle(
                             color: Colors.white38,
                             letterSpacing: 1.2,
                           ),
@@ -212,7 +221,8 @@ class _InitialPageState extends State<InitialPage> {
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 }
+

@@ -85,3 +85,30 @@ class Rename extends HomePageEvent{
   // @override
   // List<Object?> get props => [name];
 }
+
+class UploadFile extends HomePageEvent {
+  final String chatCode;
+  final String sentBy;
+
+  UploadFile({required this.chatCode, required this.sentBy});
+
+  @override
+  List<Object?> get props => [chatCode, sentBy];
+}
+
+class SendMail extends HomePageEvent {
+  final List<String> recipientEmails;
+  final List<String> messages;
+  final List<String> urls;
+  final List<String> fileNames;
+
+  SendMail({
+    required this.recipientEmails,
+    required this.messages,
+    required this.urls,
+    required this.fileNames,
+  });
+
+  @override
+  List<Object?> get props => [recipientEmails, messages, urls, fileNames];
+}

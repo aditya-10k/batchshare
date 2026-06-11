@@ -24,13 +24,29 @@ class MessageBubble extends StatelessWidget {
   }
 
   String _formatDate(String iso) {
-    final dt = DateTime.parse(iso).toLocal();
-    return "${dt.day}/${dt.month}/${dt.year}  ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}";
+    if (iso == null || iso.isEmpty) return "";
+    try {
+      final dt = DateTime.parse(iso).toLocal();
+      return "${dt.day}/${dt.month}/${dt.year}  ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}";
+    } catch (_) {
+      return "";
+    }
+  }
+
+  String _getFileNameFromUrl(String url) {
+    try {
+      final uri = Uri.parse(url);
+      final filename = uri.pathSegments.last;
+      return Uri.decodeComponent(filename);
+    } catch (_) {
+      return 'Attachment';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final maxBubbleWidth = MediaQuery.of(context).size.width * 0.3;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxBubbleWidth = screenWidth > 700 ? screenWidth * 0.35 : screenWidth * 0.75;
 
     return FutureBuilder<String?>(
       future: _getMyName(),
@@ -58,14 +74,20 @@ class MessageBubble extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: crossAlign,
                   children: [
-                    Text(
-                      "$senderName • ${_formatDate(sentAtIso)}",
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 11,
+                    if (senderName.isNotEmpty || _formatDate(sentAtIso).isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text(
+                          [
+                            if (senderName.isNotEmpty) senderName,
+                            if (_formatDate(sentAtIso).isNotEmpty) _formatDate(sentAtIso)
+                          ].join(" • "),
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 11,
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
@@ -83,50 +105,124 @@ class MessageBubble extends StatelessWidget {
                           if (fileType == 'image' && url.isNotEmpty) ...[
                             ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: InkWell(
-                                onTap: () => launchUrl(Uri.parse(url)),
-                                child: Image.network(
-                                  url,
-                                  height: 180,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                  maxHeight: 160,
+                                  maxWidth: 240,
+                                ),
+                                child: InkWell(
+                                  onTap: () => launchUrl(Uri.parse(url)),
+                                  child: Image.network(
+                                    url,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return const SizedBox(
+                                        height: 120,
+                                        width: 160,
+                                        child: Center(
+                                          child: CircularProgressIndicator(color: Colors.blueAccent),
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ),
                               ),
                             ),
-                            if (text.trim().isNotEmpty)
+                            if (text.trim().isNotEmpty) ...[
                               const SizedBox(height: 8),
+                              Text(
+                                text,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
                           ] else if (fileType == 'file' && url.isNotEmpty) ...[
-                            InkWell(
-                              onTap: () => launchUrl(Uri.parse(url)),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Icon(Icons.attach_file,
-                                      size: 18, color: Colors.white),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    'Open file',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      decoration: TextDecoration.underline,
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.25),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white10),
+                              ),
+                              child: InkWell(
+                                onTap: () => launchUrl(Uri.parse(url)),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blueAccent.withOpacity(0.15),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.insert_drive_file,
+                                        size: 24,
+                                        color: Colors.blueAccent,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 12),
+                                    Flexible(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            _getFileNameFromUrl(url),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '${url.split('.').last.toUpperCase()} Document',
+                                            style: const TextStyle(
+                                              color: Colors.white54,
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    const Icon(
+                                      Icons.open_in_new,
+                                      size: 18,
+                                      color: Colors.white54,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            if (text.trim().isNotEmpty)
+                            if (text.trim().isNotEmpty && text != _getFileNameFromUrl(url)) ...[
                               const SizedBox(height: 8),
-                          ],
-                          if (text.trim().isNotEmpty)
-                            Text(
-                              text,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                height: 1.35,
+                              Text(
+                                text,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  height: 1.35,
+                                ),
                               ),
-                            ),
+                            ],
+                          ] else ...[
+                            if (text.trim().isNotEmpty)
+                              Text(
+                                text,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  height: 1.35,
+                                ),
+                              ),
+                          ],
                         ],
                       ),
                     ),
